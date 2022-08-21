@@ -28,7 +28,7 @@ namespace DotNetOutdated.Tests
             // Arrange
             var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>
             {
-                { _solution1, MockFileData.NullObject}
+                { _solution1, new MockFileData("")}
             }, _path);
             var projectDiscoveryService = new ProjectDiscoveryService(fileSystem);
             
@@ -45,8 +45,8 @@ namespace DotNetOutdated.Tests
             // Arrange
             var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>
             {
-                { _solution1, MockFileData.NullObject},
-                { _solution2, MockFileData.NullObject}
+                { _solution1, new MockFileData("")},
+                { _solution2, new MockFileData("")}
             }, _path);
             var projectDiscoveryService = new ProjectDiscoveryService(fileSystem);
             
@@ -63,7 +63,7 @@ namespace DotNetOutdated.Tests
             // Arrange
             var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>
             {
-                { _project1, MockFileData.NullObject}
+                { _project1, new MockFileData("")}
             }, _path);
             var projectDiscoveryService = new ProjectDiscoveryService(fileSystem);
             
@@ -80,7 +80,7 @@ namespace DotNetOutdated.Tests
             // Arrange
             var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>
             {
-                { _project3, MockFileData.NullObject}
+                { _project3, new MockFileData("")}
             }, _path);
             var projectDiscoveryService = new ProjectDiscoveryService(fileSystem);
             
@@ -97,8 +97,8 @@ namespace DotNetOutdated.Tests
             // Arrange
             var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>
             {
-                { _project1, MockFileData.NullObject},
-                { _project2, MockFileData.NullObject}
+                { _project1, new MockFileData("")},
+                { _project2, new MockFileData("")}
             }, _path);
             var projectDiscoveryService = new ProjectDiscoveryService(fileSystem);
             
@@ -115,9 +115,9 @@ namespace DotNetOutdated.Tests
             // Arrange
             var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>
             {
-                { _project1, MockFileData.NullObject},
-                { _project3, MockFileData.NullObject},
-                { _project4, MockFileData.NullObject}
+                { _project1, new MockFileData("")},
+                { _project3, new MockFileData("")},
+                { _project4, new MockFileData("")}
             }, _path);
             var projectDiscoveryService = new ProjectDiscoveryService(fileSystem);
             
@@ -163,7 +163,7 @@ namespace DotNetOutdated.Tests
             // Arrange
             var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>
             {
-                {_nonProjectFile, MockFileData.NullObject}
+                {_nonProjectFile, new MockFileData("")}
             }, _path);
             var projectDiscoveryService = new ProjectDiscoveryService(fileSystem);
             
@@ -180,7 +180,7 @@ namespace DotNetOutdated.Tests
             // Arrange
             var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>
             {
-                { _solutionFilter1, MockFileData.NullObject}
+                { _solutionFilter1, new MockFileData("")}
             }, _path);
             var projectDiscoveryService = new ProjectDiscoveryService(fileSystem);
 

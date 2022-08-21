@@ -39,9 +39,9 @@ public class DependencyGraphService : IDependencyGraphService
             */
             using (var tempDirectory = new TempDirectory())
             {
-                var dependencyGraphFilename = System.IO.Path.Combine(tempDirectory.DirectoryPath, "DependencyGraph.json");
+                var dependencyGraphFilename = Path.Combine(tempDirectory.DirectoryPath, "DependencyGraph.json");
                 var dependencyGraphText = _fileSystem.File.ReadAllText(dgOutput);
-                System.IO.File.WriteAllText(dependencyGraphFilename, dependencyGraphText);
+                File.WriteAllText(dependencyGraphFilename, dependencyGraphText);
                 return DependencyGraphSpec.Load(dependencyGraphFilename);
             }
         }

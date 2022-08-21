@@ -31,10 +31,10 @@ public class ProjectDiscoveryServiceTests
             { _solution1, new MockFileData("")}
         }, _path);
         var projectDiscoveryService = new ProjectDiscoveryService(fileSystem);
-            
+
         // Act
-        string project = projectDiscoveryService.DiscoverProjects(_path).Single();
-            
+        var project = projectDiscoveryService.DiscoverProjects(_path).Single();
+
         // Assert
         Assert.Equal(_solution1, project);
     }
@@ -49,14 +49,14 @@ public class ProjectDiscoveryServiceTests
             { _solution2, new MockFileData("")}
         }, _path);
         var projectDiscoveryService = new ProjectDiscoveryService(fileSystem);
-            
+
         // Act
-            
+
         // Assert
         var exception = Assert.Throws<CommandValidationException>(() => projectDiscoveryService.DiscoverProjects(_path));
         Assert.Equal(string.Format(ValidationErrorMessages.DirectoryContainsMultipleSolutions, _path), exception.Message);
     }
-        
+
     [Fact]
     public void SingleProject_ReturnsCsProject()
     {
@@ -66,14 +66,14 @@ public class ProjectDiscoveryServiceTests
             { _project1, new MockFileData("")}
         }, _path);
         var projectDiscoveryService = new ProjectDiscoveryService(fileSystem);
-            
+
         // Act
-        string project = projectDiscoveryService.DiscoverProjects(_path).Single();
-            
+        var project = projectDiscoveryService.DiscoverProjects(_path).Single();
+
         // Assert
         Assert.Equal(_project1, project);
     }
-        
+
     [Fact]
     public void SingleProject_ReturnsFsProject()
     {
@@ -83,10 +83,10 @@ public class ProjectDiscoveryServiceTests
             { _project3, new MockFileData("")}
         }, _path);
         var projectDiscoveryService = new ProjectDiscoveryService(fileSystem);
-            
+
         // Act
-        string project = projectDiscoveryService.DiscoverProjects(_path).Single();
-            
+        var project = projectDiscoveryService.DiscoverProjects(_path).Single();
+
         // Assert
         Assert.Equal(_project3, project);
     }
@@ -101,9 +101,9 @@ public class ProjectDiscoveryServiceTests
             { _project2, new MockFileData("")}
         }, _path);
         var projectDiscoveryService = new ProjectDiscoveryService(fileSystem);
-            
+
         // Act
-            
+
         // Assert
         var exception = Assert.Throws<CommandValidationException>(() => projectDiscoveryService.DiscoverProjects(_path));
         Assert.Equal(string.Format(ValidationErrorMessages.DirectoryContainsMultipleProjects, _path), exception.Message);
@@ -120,9 +120,9 @@ public class ProjectDiscoveryServiceTests
             { _project4, new MockFileData("")}
         }, _path);
         var projectDiscoveryService = new ProjectDiscoveryService(fileSystem);
-            
+
         // Act
-            
+
         // Assert
         var projects = projectDiscoveryService.DiscoverProjects(_path, true);
         Assert.Equal(3, projects.Count);
@@ -134,29 +134,29 @@ public class ProjectDiscoveryServiceTests
         // Arrange
         var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>(), _path);
         var projectDiscoveryService = new ProjectDiscoveryService(fileSystem);
-            
+
         // Act
-            
+
         // Assert
         var exception = Assert.Throws<CommandValidationException>(() => projectDiscoveryService.DiscoverProjects(_path));
         Assert.Equal(string.Format(ValidationErrorMessages.DirectoryDoesNotContainSolutionsOrProjects, _path), exception.Message);
     }
-        
+
     [Fact]
     public void NonExistentPath_Throws()
     {
         // Arrange
         var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>(), _someOtherPath);
         var projectDiscoveryService = new ProjectDiscoveryService(fileSystem);
-            
+
         // Act
-            
+
         // Assert
         var exception = Assert.Throws<CommandValidationException>(() => projectDiscoveryService.DiscoverProjects(_path));
         Assert.Equal(string.Format(ValidationErrorMessages.DirectoryOrFileDoesNotExist, _path), exception.Message);
     }
-        
-        
+
+
     [Fact]
     public void NonSolution_Throws()
     {
@@ -166,9 +166,9 @@ public class ProjectDiscoveryServiceTests
             {_nonProjectFile, new MockFileData("")}
         }, _path);
         var projectDiscoveryService = new ProjectDiscoveryService(fileSystem);
-            
+
         // Act
-            
+
         // Assert
         var exception = Assert.Throws<CommandValidationException>(() => projectDiscoveryService.DiscoverProjects(_nonProjectFile));
         Assert.Equal(string.Format(ValidationErrorMessages.FileNotAValidSolutionOrProject, _nonProjectFile), exception.Message);

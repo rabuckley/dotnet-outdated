@@ -20,8 +20,5 @@ class TempDirectory : IDisposable
         Directory.Delete(DirectoryPath, true);
     }
 
-    public string DirectoryPath
-    {
-        get => Path.Combine(tempPath, tempDirName);
-    }
+    public string DirectoryPath => Path.Combine(tempPath, tempDirName);
 }

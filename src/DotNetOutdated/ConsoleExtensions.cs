@@ -7,7 +7,7 @@ public static class ConsoleExtensions
 {
     public static void Write(this IConsole console, object value, ConsoleColor color)
     {
-        ConsoleColor currentColor = console.ForegroundColor;
+        var currentColor = console.ForegroundColor;
             
         console.ForegroundColor = color;
         console.Write(value);
@@ -16,8 +16,8 @@ public static class ConsoleExtensions
         
     public static void Write(this IConsole console, object value, ConsoleColor foregroundColor, ConsoleColor backgroundColor)
     {
-        ConsoleColor currentForegroundColor = console.ForegroundColor;
-        ConsoleColor currentBackgroundColor = console.BackgroundColor;
+        var currentForegroundColor = console.ForegroundColor;
+        var currentBackgroundColor = console.BackgroundColor;
             
         console.ForegroundColor = foregroundColor;
         console.BackgroundColor = backgroundColor;
@@ -28,7 +28,7 @@ public static class ConsoleExtensions
         
     public static void WriteLine(this IConsole console, object value, ConsoleColor color)
     {
-        ConsoleColor currentColor = console.ForegroundColor;
+        var currentColor = console.ForegroundColor;
             
         console.ForegroundColor = color;
         console.WriteLine(value);
@@ -37,6 +37,6 @@ public static class ConsoleExtensions
         
     public static void WriteIndent(this IConsole console)
     {
-        console.Write(new String(' ', 2));
+        console.Write(new string(' ', 2));
     }
 }

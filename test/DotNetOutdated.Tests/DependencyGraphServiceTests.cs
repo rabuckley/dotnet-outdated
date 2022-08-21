@@ -28,7 +28,7 @@ public class DependencyGraphServiceTests
             .Callback((string directory, string[] arguments) =>
             {
                 // Grab the temp filename that was passed...
-                string tempFileName = arguments[3].Replace("/p:RestoreGraphOutputPath=", string.Empty).Trim('"');
+                var tempFileName = arguments[3].Replace("/p:RestoreGraphOutputPath=", string.Empty).Trim('"');
 
                 // ... and stuff it with our dummy dependency graph
                 mockFileSystem.AddFileFromEmbeddedResource(tempFileName, GetType().Assembly, "DotNetOutdated.Tests.TestData.test.dg");
@@ -75,7 +75,7 @@ public class DependencyGraphServiceTests
             .Callback((string directory, string[] arguments) =>
             {
                 // Grab the temp filename that was passed...
-                string tempFileName = arguments[3].Replace("/p:RestoreGraphOutputPath=", string.Empty).Trim('"');
+                var tempFileName = arguments[3].Replace("/p:RestoreGraphOutputPath=", string.Empty).Trim('"');
 
                 // ... and stuff it with our dummy dependency graph
                 mockFileSystem.AddFileFromEmbeddedResource(tempFileName, GetType().Assembly, "DotNetOutdated.Tests.TestData.empty.dg");

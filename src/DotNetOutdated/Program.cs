@@ -77,11 +77,11 @@ class Program : CommandBase
 
     [Option(CommandOptionType.MultipleValue, Description = "Specifies to only look at packages where the name contains the provided string. Culture and case insensitive. If provided multiple times, a single match is enough to include a package.",
         ShortName = "inc", LongName = "include")]
-    public List<string> FilterInclude { get; set; } = new List<string>();
+    public List<string> FilterInclude { get; set; } = new();
 
     [Option(CommandOptionType.MultipleValue, Description = "Specifies to only look at packages where the name does not contain the provided string. Culture and case insensitive. If provided multiple times, a single match is enough to exclude a package.",
         ShortName = "exc", LongName = "exclude")]
-    public List<string> FilterExclude { get; set; } = new List<string>();
+    public List<string> FilterExclude { get; set; } = new();
 
     [Option(CommandOptionType.SingleValue, Description = "Specifies the filename for a generated report. " +
                                                          "(Use the -of|--output-format option to specify the format. JSON by default.)",
@@ -134,10 +134,13 @@ class Program : CommandBase
         }
     }
 
-    public static string GetVersion() => typeof(Program)
-        .Assembly
-        .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
-        .InformationalVersion;
+    public static string GetVersion()
+    {
+        return typeof(Program)
+            .Assembly
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
+            .InformationalVersion;
+    }
 
     public Program(IFileSystem fileSystem, IReporter reporter, INuGetPackageResolutionService nugetService, IProjectAnalysisService projectAnalysisService,
         IProjectDiscoveryService projectDiscoveryService, IDotNetAddPackageService dotNetAddPackageService, ICentralPackageVersionManagementService centralPackageVersionManagementService)
@@ -159,7 +162,9 @@ class Program : CommandBase
 
             // If no path is set, use the current directory
             if (string.IsNullOrEmpty(Path))
+            {
                 Path = _fileSystem.Directory.GetCurrentDirectory();
+            }
 
             // Get all the projects
             console.Write("Discovering projects...");
@@ -169,19 +174,27 @@ class Program : CommandBase
             var projectPaths = _projectDiscoveryService.DiscoverProjects(Path, Recursive);
 
             if (!console.IsOutputRedirected)
+            {
                 ClearCurrentConsoleLine();
+            }
             else
+            {
                 console.WriteLine();
+            }
 
             // Analyze the projects
             console.Write("Analyzing project(s)...");
-                
+
             var projects = projectPaths.SelectMany(path => _projectAnalysisService.AnalyzeProject(path, false, Transitive, TransitiveDepth)).ToList();
 
             if (!console.IsOutputRedirected)
+            {
                 ClearCurrentConsoleLine();
+            }
             else
+            {
                 console.WriteLine();
+            }
 
             // Analyze the dependencies
             var outdatedProjects = await AnalyzeDependencies(projects, console);
@@ -204,10 +217,14 @@ class Program : CommandBase
                 GenerateOutputFile(outdatedProjects);
 
                 if (FailOnUpdates)
+                {
                     return 2;
+                }
 
                 if (!success)
+                {
                     return 3;
+                }
             }
             else
             {
@@ -228,7 +245,7 @@ class Program : CommandBase
 
     private bool UpgradePackages(List<AnalyzedProject> projects, IConsole console)
     {
-        bool success = true;
+        var success = true;
 
         if (Upgrade.HasValue)
         {
@@ -238,12 +255,12 @@ class Program : CommandBase
 
             foreach (var package in consolidatedPackages)
             {
-                bool upgrade = true;
+                var upgrade = true;
 
                 if (Upgrade.UpgradeType == UpgradeType.Prompt)
                 {
-                    string resolvedVersion = package.ResolvedVersion?.ToString() ?? "";
-                    string latestVersion = package.LatestVersion?.ToString() ?? "";
+                    var resolvedVersion = package.ResolvedVersion?.ToString() ?? "";
+                    var latestVersion = package.LatestVersion?.ToString() ?? "";
 
                     console.Write($"The package ");
                     console.Write(package.Description, Constants.ReporingColors.PackageName);
@@ -267,7 +284,7 @@ class Program : CommandBase
 
                     foreach (var project in package.Projects)
                     {
-                        RunStatus status = package.IsVersionCentrallyManaged
+                        var status = package.IsVersionCentrallyManaged
                             ? _centralPackageVersionManagementService.AddPackage(project.ProjectFilePath, package.Name, package.LatestVersion, NoRestore)
                             : _dotNetAddPackageService.AddPackage(project.ProjectFilePath, package.Name, project.Framework.ToString(), package.LatestVersion, NoRestore, IgnoreFailedSources);
 
@@ -356,7 +373,7 @@ class Program : CommandBase
                     .OrderBy(d => d.Name)
                     .ToList();
 
-                int[] columnWidths = dependencies.DetermineColumnWidths();
+                var columnWidths = dependencies.DetermineColumnWidths();
 
                 foreach (var dependency in dependencies)
                 {
@@ -375,7 +392,7 @@ class Program : CommandBase
         if (projects.SelectMany(p => p.TargetFrameworks).SelectMany(f => f.Dependencies).Any(d => d.UpgradeSeverity == DependencyUpgradeSeverity.Unknown))
         {
             console.WriteLine("Errors occurred while analyzing dependencies for some of your projects. Are you sure you can connect to all your configured NuGet servers?", ConsoleColor.Red);
-            if (String.IsNullOrEmpty(Environment.GetEnvironmentVariable("DOTNET_HOST_PATH")))
+            if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("DOTNET_HOST_PATH")))
             {
                 // Issue #255: Sometimes the dotnet executable sets this
                 // variable for you, sometimes it doesn't. If it's not
@@ -405,23 +422,33 @@ class Program : CommandBase
         }
 
         await Task.WhenAll(tasks);
-            
+
         if (!console.IsOutputRedirected)
+        {
             ClearCurrentConsoleLine();
+        }
         else
+        {
             console.WriteLine();
+        }
 
         return outdatedProjects.ToList();
     }
 
-    private bool AnyIncludeFilterMatches(Dependency dep) =>
-        FilterInclude.Any(f => NameContains(dep, f));
+    private bool AnyIncludeFilterMatches(Dependency dep)
+    {
+        return FilterInclude.Any(f => NameContains(dep, f));
+    }
 
-    private bool NoExcludeFilterMatches(Dependency dep) =>
-        !FilterExclude.Any(f => NameContains(dep, f));
+    private bool NoExcludeFilterMatches(Dependency dep)
+    {
+        return !FilterExclude.Any(f => NameContains(dep, f));
+    }
 
-    private bool NameContains(Dependency dep, string part) =>
-        dep.Name.Contains(part, StringComparison.InvariantCultureIgnoreCase);
+    private bool NameContains(Dependency dep, string part)
+    {
+        return dep.Name.Contains(part, StringComparison.InvariantCultureIgnoreCase);
+    }
 
     private async Task AddOutdatedProjectsIfNeeded(Project project, ConcurrentBag<AnalyzedProject> outdatedProjects, IConsole console)
     {
@@ -439,20 +466,26 @@ class Program : CommandBase
         await Task.WhenAll(tasks);
 
         if (outdatedFrameworks.Count > 0)
+        {
             outdatedProjects.Add(new AnalyzedProject(project.Name, project.FilePath, outdatedFrameworks));
+        }
     }
 
     private async Task AddOutdatedFrameworkIfNeeded(TargetFramework targetFramework, Project project, ConcurrentBag<AnalyzedTargetFramework> outdatedFrameworks, IConsole console)
     {
         var outdatedDependencies = new ConcurrentBag<AnalyzedDependency>();
 
-        var deps = targetFramework.Dependencies.Where(d => this.IncludeAutoReferences || d.IsAutoReferenced == false);
+        var deps = targetFramework.Dependencies.Where(d => IncludeAutoReferences || d.IsAutoReferenced == false);
 
         if (FilterInclude.Any())
+        {
             deps = deps.Where(AnyIncludeFilterMatches);
+        }
 
         if (FilterExclude.Any())
+        {
             deps = deps.Where(NoExcludeFilterMatches);
+        }
 
         var dependencies = deps.OrderBy(dependency => dependency.IsTransitive)
             .ThenBy(dependency => dependency.Name)
@@ -464,13 +497,15 @@ class Program : CommandBase
         {
             var dependency = dependencies[index];
 
-            tasks[index] = this.AddOutdatedDependencyIfNeeded(project, targetFramework, dependency, outdatedDependencies);
+            tasks[index] = AddOutdatedDependencyIfNeeded(project, targetFramework, dependency, outdatedDependencies);
         }
 
         await Task.WhenAll(tasks);
 
         if (outdatedDependencies.Count > 0)
+        {
             outdatedFrameworks.Add(new AnalyzedTargetFramework(targetFramework.Name, outdatedDependencies));
+        }
     }
 
     private async Task AddOutdatedDependencyIfNeeded(Project project, TargetFramework targetFramework, Dependency dependency, ConcurrentBag<AnalyzedDependency> outdatedDependencies)
@@ -489,7 +524,7 @@ class Program : CommandBase
             // special case when there is version installed which is not older than "OlderThan" days makes "latestVersion" to be null
             if (OlderThanDays > 0 && latestVersion == null)
             {
-                NuGetVersion absoluteLatestVersion = await _nugetService.ResolvePackageVersions(dependency.Name, referencedVersion, project.Sources, dependency.VersionRange,
+                var absoluteLatestVersion = await _nugetService.ResolvePackageVersions(dependency.Name, referencedVersion, project.Sources, dependency.VersionRange,
                     VersionLock, Prerelease, targetFramework.Name, project.FilePath, dependency.IsDevelopmentDependency);
 
                 if (absoluteLatestVersion == null || referencedVersion > absoluteLatestVersion)
@@ -557,7 +592,7 @@ class Program : CommandBase
 
     public static void ClearCurrentConsoleLine()
     {
-        int currentLineCursor = Console.CursorTop;
+        var currentLineCursor = Console.CursorTop;
         Console.SetCursorPosition(0, Console.CursorTop);
         Console.Write(new string(' ', Console.BufferWidth));
         Console.SetCursorPosition(0, currentLineCursor);

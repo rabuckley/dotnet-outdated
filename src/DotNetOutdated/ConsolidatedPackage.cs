@@ -22,12 +22,16 @@ public class ConsolidatedPackage
     {
         get
         {
-            string title = Name;
+            var title = Name;
 
             if (IsAutoReferenced)
+            {
                 title += " [A]";
+            }
             else if (IsTransitive)
+            {
                 title += " [T]";
+            }
 
             return title;
         }

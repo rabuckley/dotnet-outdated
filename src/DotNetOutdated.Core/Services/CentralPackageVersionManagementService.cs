@@ -20,31 +20,31 @@ public class CentralPackageVersionManagementService : ICentralPackageVersionMana
 
     public RunStatus AddPackage(string projectFilePath, string packageName, NuGetVersion version, bool noRestore)
     {
-        RunStatus status = new RunStatus(string.Empty, string.Empty, 0);
+        var status = new RunStatus(string.Empty, string.Empty, 0);
 
         try
         {
-            IFileInfo projectFile = _fileSystem.FileInfo.FromFileName(projectFilePath);
-            bool foundCPVMFile = false;
-            IDirectoryInfo directoryInfo = projectFile.Directory;
+            var projectFile = _fileSystem.FileInfo.FromFileName(projectFilePath);
+            var foundCPVMFile = false;
+            var directoryInfo = projectFile.Directory;
 
             while (!foundCPVMFile && directoryInfo != null)
             {
                 IFileInfo[] files = directoryInfo.GetFiles("*", SearchOption.TopDirectoryOnly);
-                IFileInfo cpvmFile = files.SingleOrDefault(f => f.Name.Equals("Directory.Packages.Props", StringComparison.OrdinalIgnoreCase));
+                var cpvmFile = files.SingleOrDefault(f => f.Name.Equals("Directory.Packages.Props", StringComparison.OrdinalIgnoreCase));
 
                 if (cpvmFile != null)
                 {
-                    string fileContent = string.Empty;
+                    var fileContent = string.Empty;
 
-                    using (StreamReader reader = cpvmFile.OpenText())
+                    using (var reader = cpvmFile.OpenText())
                     {
                         fileContent = reader.ReadToEnd();
                     }
 
                     if (fileContent.IndexOf($"\"{packageName}\"", StringComparison.OrdinalIgnoreCase) != -1)
                     {
-                        string newFileContent = Regex.Replace(fileContent, $"(<PackageVersion\\s*(?:Include|Update)=\"{packageName}\"\\s*Version=\")([^\"]*)(\".*\\/>)", m => $"{m.Groups[1].Captures[0].Value}{version}{m.Groups[3].Captures[0].Value}");
+                        var newFileContent = Regex.Replace(fileContent, $"(<PackageVersion\\s*(?:Include|Update)=\"{packageName}\"\\s*Version=\")([^\"]*)(\".*\\/>)", m => $"{m.Groups[1].Captures[0].Value}{version}{m.Groups[3].Captures[0].Value}");
 
                         if (newFileContent != fileContent)
                         {
@@ -63,7 +63,7 @@ public class CentralPackageVersionManagementService : ICentralPackageVersionMana
 
             if (!noRestore)
             {
-                RunStatus restoreStatus = _dotNetRestoreService.Restore(projectFilePath);
+                var restoreStatus = _dotNetRestoreService.Restore(projectFilePath);
 
                 if (!restoreStatus.IsSuccess)
                 {

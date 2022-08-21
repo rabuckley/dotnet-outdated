@@ -54,12 +54,16 @@ public class AnalyzedDependency
     {
         get
         {
-            string description = Name;
+            var description = Name;
 
             if (IsAutoReferenced)
+            {
                 description += " [A]";
+            }
             else if (IsTransitive)
+            {
                 description += " [T]";
+            }
 
             return description;
         }
@@ -89,15 +93,25 @@ public class AnalyzedDependency
         get
         {
             if (LatestVersion == null || ResolvedVersion == null)
+            {
                 return DependencyUpgradeSeverity.Unknown;
+            }
 
             if (LatestVersion.Major > ResolvedVersion.Major || ResolvedVersion.IsPrerelease)
+            {
                 return DependencyUpgradeSeverity.Major;
+            }
+
             if (LatestVersion.Minor > ResolvedVersion.Minor)
+            {
                 return DependencyUpgradeSeverity.Minor;
+            }
+
             if (LatestVersion.Patch > ResolvedVersion.Patch || LatestVersion.Revision > ResolvedVersion.Revision)
+            {
                 return DependencyUpgradeSeverity.Patch;
-                    
+            }
+
             return DependencyUpgradeSeverity.None;
         }
     }

@@ -22,7 +22,7 @@ public class NuGetPackageInfoService : INuGetPackageInfoService, IDisposable
     private IEnumerable<PackageSource> _enabledSources = null;
     private readonly SourceCacheContext _context;
         
-    private readonly ConcurrentDictionary<string, Lazy<Task<PackageMetadataResource>>> _metadataResourceRequests = new ConcurrentDictionary<string, Lazy<Task<PackageMetadataResource>>>();
+    private readonly ConcurrentDictionary<string, Lazy<Task<PackageMetadataResource>>> _metadataResourceRequests = new();
 
     public NuGetPackageInfoService()
     {
@@ -47,19 +47,19 @@ public class NuGetPackageInfoService : INuGetPackageInfoService, IDisposable
     {
         try
         {
-            string resourceUrl = source.AbsoluteUri;
+            var resourceUrl = source.AbsoluteUri;
 
             // We try and create the source repository from the enable sources we loaded from config.
             // This allows us to inherit the username/password for the source from the config and thus
             // enables secure feeds to work properly
-            var enabledSources = this.GetEnabledSources(projectFilePath);
+            var enabledSources = GetEnabledSources(projectFilePath);
             var enabledSource = enabledSources?.FirstOrDefault(s => s.SourceUri == source);
             var sourceRepository = enabledSource != null
                 ? new SourceRepository(enabledSource, Repository.Provider.GetCoreV3())
                 : Repository.Factory.GetCoreV3(resourceUrl);
 
             var resourceRequest = new Lazy<Task<PackageMetadataResource>>(() => sourceRepository.GetResourceAsync<PackageMetadataResource>());
-            return await this._metadataResourceRequests.GetOrAdd(resourceUrl, resourceRequest).Value;
+            return await _metadataResourceRequests.GetOrAdd(resourceUrl, resourceRequest).Value;
         }
         catch (Exception)
         {
@@ -136,7 +136,10 @@ public class NuGetPackageInfoService : INuGetPackageInfoService, IDisposable
                     continue;
                 }
                 // if the inner exception is NOT HttpRequestException, throw it
-                if (ex.InnerException != null && !(ex.InnerException is HttpRequestException)) throw ex;
+                if (ex.InnerException != null && !(ex.InnerException is HttpRequestException))
+                {
+                    throw ex;
+                }
             }
         }
 

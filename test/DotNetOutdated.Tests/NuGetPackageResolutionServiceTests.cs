@@ -17,28 +17,28 @@ public class NuGetPackageResolutionServiceTests
 
     public NuGetPackageResolutionServiceTests()
     {
-        List<NuGetVersion> availableVersions = new List<NuGetVersion>
+        var availableVersions = new List<NuGetVersion>
         {
-            new NuGetVersion("1.1.0"),
-            new NuGetVersion("1.2.0"),
-            new NuGetVersion("1.2.2"),
-            new NuGetVersion("1.3.0-pre"),
-            new NuGetVersion("1.3.0"),
-            new NuGetVersion("1.4.0-pre"),
-            new NuGetVersion("2.0.0"),
-            new NuGetVersion("2.1.0"),
-            new NuGetVersion("2.2.0-pre.1"),
-            new NuGetVersion("2.2.0-pre.2"),
-            new NuGetVersion("3.0.0-pre.1"),
-            new NuGetVersion("3.0.0-pre.2"),
-            new NuGetVersion("3.1.0-pre.1"),
-            new NuGetVersion("4.0.0-pre.1")
+            new("1.1.0"),
+            new("1.2.0"),
+            new("1.2.2"),
+            new("1.3.0-pre"),
+            new("1.3.0"),
+            new("1.4.0-pre"),
+            new("2.0.0"),
+            new("2.1.0"),
+            new("2.2.0-pre.1"),
+            new("2.2.0-pre.2"),
+            new("3.0.0-pre.1"),
+            new("3.0.0-pre.2"),
+            new("3.1.0-pre.1"),
+            new("4.0.0-pre.1")
         };
-            
+
         var nuGetPackageInfoService = new Mock<INuGetPackageInfoService>();
         nuGetPackageInfoService.Setup(service => service.GetAllVersions(packageName, It.IsAny<List<Uri>>(), It.IsAny<bool>(), It.IsAny<NuGetFramework>(), It.IsAny<string>(), It.IsAny<bool>(), 0, It.IsAny<bool>()))
             .ReturnsAsync(availableVersions);
-            
+
         _nuGetPackageResolutionService = new NuGetPackageResolutionService(nuGetPackageInfoService.Object);
     }
 
@@ -59,10 +59,10 @@ public class NuGetPackageResolutionServiceTests
     public async Task ResolvesVersion_Correctly(string current, VersionLock versionLock, PrereleaseReporting prerelease, string latest)
     {
         // Arrange
-            
+
         // Act
         var latestVersion = await _nuGetPackageResolutionService.ResolvePackageVersions(packageName, NuGetVersion.Parse(current), new List<Uri>(), VersionRange.Parse(current), versionLock, prerelease, null, null, false, 0);
-            
+
         // Assert
         Assert.Equal(NuGetVersion.Parse(latest), latestVersion);
     }

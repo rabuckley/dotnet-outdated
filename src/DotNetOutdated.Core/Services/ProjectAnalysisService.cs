@@ -27,7 +27,9 @@ public class ProjectAnalysisService : IProjectAnalysisService
     {
         var dependencyGraph = _dependencyGraphService.GenerateDependencyGraph(projectPath);
         if (dependencyGraph == null)
+        {
             return null;
+        }
 
         var projects = new List<Project>();
         foreach (var packageSpec in dependencyGraph.Projects.Where(p => p.RestoreMetadata.ProjectStyle == ProjectStyle.PackageReference))
@@ -39,7 +41,7 @@ public class ProjectAnalysisService : IProjectAnalysisService
             }
 
             // Load the lock file
-            string lockFilePath = _fileSystem.Path.Combine(packageSpec.RestoreMetadata.OutputPath, "project.assets.json");
+            var lockFilePath = _fileSystem.Path.Combine(packageSpec.RestoreMetadata.OutputPath, "project.assets.json");
             var lockFile = LockFileUtilities.GetLockFile(lockFilePath, NullLogger.Instance);
 
             // Create a project
@@ -60,14 +62,16 @@ public class ProjectAnalysisService : IProjectAnalysisService
                     {
                         var projectLibrary = target.Libraries.FirstOrDefault(library => string.Equals(library.Name, projectDependency.Name, StringComparison.OrdinalIgnoreCase));
 
-                        bool isDevelopmentDependency = false;
+                        var isDevelopmentDependency = false;
                         if (projectLibrary != null)
                         {
                             // Determine whether this is a development dependency
                             var packageIdentity = new PackageIdentity(projectLibrary.Name, projectLibrary.Version);
                             var packageInfo = LocalFolderUtility.GetPackageV3(packageSpec.RestoreMetadata.PackagesPath, packageIdentity, NullLogger.Instance);
                             if (packageInfo != null)
+                            {
                                 isDevelopmentDependency = packageInfo.GetReader().GetDevelopmentDependency();
+                            }
                         }
 
                         var dependency = new Dependency(projectDependency.Name, projectDependency.LibraryRange.VersionRange, projectLibrary?.Version,
@@ -76,7 +80,9 @@ public class ProjectAnalysisService : IProjectAnalysisService
 
                         // Process transitive dependencies for the library
                         if (includeTransitiveDependencies)
+                        {
                             AddDependencies(targetFramework, projectLibrary, target, 1, transitiveDepth);
+                        }
                     }
                 }
             }
@@ -101,7 +107,9 @@ public class ProjectAnalysisService : IProjectAnalysisService
 
                     // Process the dependency for this project dependency
                     if (level < transitiveDepth)
+                    {
                         AddDependencies(targetFramework, childLibrary, target, level + 1, transitiveDepth);
+                    }
                 }
             }
         }

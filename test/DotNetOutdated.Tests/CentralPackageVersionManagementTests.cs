@@ -11,10 +11,10 @@ public class CentralPackageVersionManagementTests
     [Fact]
     public void UpgradingCPVMEnabledPackage_UpdatesNearestCPVMFile()
     {
-        SetupCPVMMocks(out Mock<IDotNetRestoreService> mockRestoreService, out MockFileSystem mockFileSystem, out string path, out string nearestCPVMFilePath, out string rootCPVMFilePath, out string rootCPVMFileContent, out string _, out string _);
+        SetupCPVMMocks(out var mockRestoreService, out var mockFileSystem, out var path, out var nearestCPVMFilePath, out var rootCPVMFilePath, out var rootCPVMFileContent, out var _, out var _);
 
-        CentralPackageVersionManagementService subject = new CentralPackageVersionManagementService(mockFileSystem, mockRestoreService.Object);
-        RunStatus status = subject.AddPackage(path, "FakePackage", new NuGet.Versioning.NuGetVersion(2, 0, 0), false);
+        var subject = new CentralPackageVersionManagementService(mockFileSystem, mockRestoreService.Object);
+        var status = subject.AddPackage(path, "FakePackage", new NuGet.Versioning.NuGetVersion(2, 0, 0), false);
 
         Assert.NotNull(status);
         Assert.Equal(0, status.ExitCode);
@@ -26,10 +26,10 @@ public class CentralPackageVersionManagementTests
     [Fact]
     public void UpgradingCPVMEnabledPackage_DoesNotModifyProjectFile()
     {
-        SetupCPVMMocks(out Mock<IDotNetRestoreService> mockRestoreService, out MockFileSystem mockFileSystem, out string path, out string _, out string _, out string _, out string _, out string projectFileContent);
+        SetupCPVMMocks(out var mockRestoreService, out var mockFileSystem, out var path, out var _, out var _, out var _, out var _, out var projectFileContent);
 
-        CentralPackageVersionManagementService subject = new CentralPackageVersionManagementService(mockFileSystem, mockRestoreService.Object);
-        RunStatus status = subject.AddPackage(path, "FakePackage", new NuGet.Versioning.NuGetVersion(2, 0, 0), false);
+        var subject = new CentralPackageVersionManagementService(mockFileSystem, mockRestoreService.Object);
+        var status = subject.AddPackage(path, "FakePackage", new NuGet.Versioning.NuGetVersion(2, 0, 0), false);
 
         Assert.Equal(projectFileContent, mockFileSystem.GetFile(path).TextContents);
     }
@@ -39,10 +39,10 @@ public class CentralPackageVersionManagementTests
     [InlineData(false)]
     public void UpgradingCPVMEnabledPackage_RespectsNoRestoreFlag(bool noRestore)
     {
-        SetupCommonMocks(out Mock<IDotNetRestoreService> mockRestoreService, out MockFileSystem mockFileSystem, out string projectPath, out string _);
+        SetupCommonMocks(out var mockRestoreService, out var mockFileSystem, out var projectPath, out var _);
 
-        CentralPackageVersionManagementService subject = new CentralPackageVersionManagementService(mockFileSystem, mockRestoreService.Object);
-        RunStatus status = subject.AddPackage(projectPath, "FakePackage", new NuGet.Versioning.NuGetVersion(1, 0, 0), noRestore);
+        var subject = new CentralPackageVersionManagementService(mockFileSystem, mockRestoreService.Object);
+        var status = subject.AddPackage(projectPath, "FakePackage", new NuGet.Versioning.NuGetVersion(1, 0, 0), noRestore);
 
         if (noRestore)
         {

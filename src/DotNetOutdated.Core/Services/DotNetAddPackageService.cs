@@ -2,39 +2,38 @@
 using System.IO.Abstractions;
 using NuGet.Versioning;
 
-namespace DotNetOutdated.Core.Services
+namespace DotNetOutdated.Core.Services;
+
+public class DotNetAddPackageService : IDotNetAddPackageService
 {
-    public class DotNetAddPackageService : IDotNetAddPackageService
+    private readonly IDotNetRunner _dotNetRunner;
+    private readonly IFileSystem _fileSystem;
+
+    public DotNetAddPackageService(IDotNetRunner dotNetRunner, IFileSystem fileSystem)
     {
-        private readonly IDotNetRunner _dotNetRunner;
-        private readonly IFileSystem _fileSystem;
+        _dotNetRunner = dotNetRunner;
+        _fileSystem = fileSystem;
+    }
 
-        public DotNetAddPackageService(IDotNetRunner dotNetRunner, IFileSystem fileSystem)
-        {
-            _dotNetRunner = dotNetRunner;
-            _fileSystem = fileSystem;
-        }
+    public RunStatus AddPackage(string projectPath, string packageName, string frameworkName, NuGetVersion version)
+    {
+        return AddPackage(projectPath, packageName, frameworkName, version, false);
+    }
 
-        public RunStatus AddPackage(string projectPath, string packageName, string frameworkName, NuGetVersion version)
-        {
-            return AddPackage(projectPath, packageName, frameworkName, version, false);
-        }
-
-        public RunStatus AddPackage(string projectPath, string packageName, string frameworkName, NuGetVersion version, bool noRestore, bool ignoreFailedSource=false)
-        {
-            string projectName = _fileSystem.Path.GetFileName(projectPath);
+    public RunStatus AddPackage(string projectPath, string packageName, string frameworkName, NuGetVersion version, bool noRestore, bool ignoreFailedSource=false)
+    {
+        string projectName = _fileSystem.Path.GetFileName(projectPath);
             
-            List<string> arguments = new List<string>{"add", $"\"{projectName}\"", "package", packageName, "-v", version.ToString(), "-f", $"\"{frameworkName}\"" };
-            if (noRestore)
-            {
-                arguments.Add("--no-restore");
-            }
-            if (ignoreFailedSource)
-            {
-                arguments.Add("--ignore-failed-sources");
-            }
-
-            return _dotNetRunner.Run(_fileSystem.Path.GetDirectoryName(projectPath), arguments.ToArray());
+        List<string> arguments = new List<string>{"add", $"\"{projectName}\"", "package", packageName, "-v", version.ToString(), "-f", $"\"{frameworkName}\"" };
+        if (noRestore)
+        {
+            arguments.Add("--no-restore");
         }
+        if (ignoreFailedSource)
+        {
+            arguments.Add("--ignore-failed-sources");
+        }
+
+        return _dotNetRunner.Run(_fileSystem.Path.GetDirectoryName(projectPath), arguments.ToArray());
     }
 }

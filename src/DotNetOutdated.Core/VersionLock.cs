@@ -1,9 +1,8 @@
-﻿namespace DotNetOutdated.Core
+﻿namespace DotNetOutdated.Core;
+
+public enum VersionLock
 {
-    public enum VersionLock
-    {
-        None,
-        Major,
-        Minor
-    }
+    None,
+    Major,
+    Minor
 }

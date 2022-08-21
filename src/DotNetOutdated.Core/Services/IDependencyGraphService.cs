@@ -1,9 +1,8 @@
 ﻿using NuGet.ProjectModel;
 
-namespace DotNetOutdated.Core.Services
+namespace DotNetOutdated.Core.Services;
+
+public interface IDependencyGraphService
 {
-    public interface IDependencyGraphService
-    {
-        DependencyGraphSpec GenerateDependencyGraph(string projectPath);
-    }
+    DependencyGraphSpec GenerateDependencyGraph(string projectPath);
 }

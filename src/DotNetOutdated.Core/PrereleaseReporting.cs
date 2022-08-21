@@ -1,9 +1,8 @@
-﻿namespace DotNetOutdated.Core
+﻿namespace DotNetOutdated.Core;
+
+public enum PrereleaseReporting
 {
-    public enum PrereleaseReporting
-    {
-        Auto,
-        Always,
-        Never
-    }
+    Auto,
+    Always,
+    Never
 }

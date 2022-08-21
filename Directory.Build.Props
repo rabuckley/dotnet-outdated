@@ -1,0 +1,30 @@
+<Project>
+
+  <PropertyGroup>
+    <NeutralLanguage>en</NeutralLanguage>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- Defaults to true from SDK 6.0.300 and Visual Studio 17.2 -->
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <LangVersion>preview</LangVersion>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisMode>AllEnabledByDefault</AnalysisMode>
+    <AnalysisLevel>preview</AnalysisLevel>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <DebugType>portable</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+  </PropertyGroup>
+
+</Project>

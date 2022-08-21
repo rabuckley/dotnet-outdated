@@ -3,6 +3,7 @@
     <TargetFrameworks>net6.0;net7.0</TargetFrameworks>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
+  
   <ItemGroup>
     <PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="4.0.1" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.3.0" />
@@ -16,10 +17,12 @@
     </PackageReference>
     <DotNetCliToolReference Include="dotnet-xunit" Version="2.3.1" />
   </ItemGroup>
+  
   <ItemGroup>
     <ProjectReference Include="..\..\src\DotNetOutdated.Core\DotNetOutdated.Core.csproj" />
     <ProjectReference Include="..\..\src\DotNetOutdated\DotNetOutdated.csproj" />
   </ItemGroup>
+  
   <ItemGroup>
     <None Remove="TestData\*.*" />
     <EmbeddedResource Include="TestData\*.*" />

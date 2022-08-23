@@ -1,12 +1,9 @@
-using System;
-using System.IO;
-
-namespace DotNetOutdated;
+namespace DotNetOutdated.Core;
 
 class TempDirectory : IDisposable
 {
-    private string tempPath;
-    private string tempDirName;
+    private readonly string tempPath;
+    private readonly string tempDirName;
 
     public TempDirectory()
     {

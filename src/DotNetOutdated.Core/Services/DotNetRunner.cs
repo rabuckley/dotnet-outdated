@@ -1,8 +1,6 @@
-﻿using McMaster.Extensions.CommandLineUtils;
-using System.Diagnostics;
-using System.IO;
+﻿using System.Diagnostics;
 using System.Text;
-using System.Threading.Tasks;
+using McMaster.Extensions.CommandLineUtils;
 
 namespace DotNetOutdated.Core.Services;
 
@@ -21,7 +19,7 @@ public class DotNetRunner : IDotNetRunner
             RedirectStandardOutput = true,
             RedirectStandardError = true
         };
-            
+
         var p = new Process();
         try
         {
@@ -51,13 +49,12 @@ public class DotNetRunner : IDotNetRunner
             p.Dispose();
         }
     }
-        
-    private static async Task ConsumeStreamReaderAsync(StreamReader reader, StringBuilder lines)
+
+    private static async Task ConsumeStreamReaderAsync(TextReader reader, StringBuilder lines)
     {
         await Task.Yield();
 
-        string line;
-        while ((line = await reader.ReadLineAsync()) != null)
+        while (await reader.ReadLineAsync().ConfigureAwait(false) is { } line)
         {
             lines.AppendLine(line);
         }

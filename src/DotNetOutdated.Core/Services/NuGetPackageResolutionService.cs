@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+﻿using System.Collections.Concurrent;
+using DotNetOutdated.Core.Models;
 using NuGet.Frameworks;
 using NuGet.Versioning;
 
 namespace DotNetOutdated.Core.Services;
-
-using System.Collections.Concurrent;
-using System.Linq;
 
 public class NuGetPackageResolutionService : INuGetPackageResolutionService
 {
@@ -19,46 +15,32 @@ public class NuGetPackageResolutionService : INuGetPackageResolutionService
         _nugetService = nugetService;
     }
 
-    public async Task<NuGetVersion> ResolvePackageVersions(string packageName, NuGetVersion referencedVersion, IEnumerable<Uri> sources, VersionRange currentVersionRange,
-        VersionLock versionLock, PrereleaseReporting prerelease, NuGetFramework targetFrameworkName, string projectFilePath, bool isDevelopmentDependency)
+    public async Task<NuGetVersion> ResolvePackageVersions(string packageName, NuGetVersion referencedVersion, IEnumerable<Uri> sources, VersionRange currentVersionRange, CommandModel model, NuGetFramework targetFrameworkName, string projectFilePath, bool isDevelopmentDependency)
     {
-        return await ResolvePackageVersions(packageName, referencedVersion, sources, currentVersionRange, versionLock, prerelease, targetFrameworkName, projectFilePath,
-            isDevelopmentDependency, 0);
+        return await ResolvePackageVersions(packageName, referencedVersion, sources, currentVersionRange, targetFrameworkName, packageName, isDevelopmentDependency, model).ConfigureAwait(false);
     }
-
-    public async Task<NuGetVersion> ResolvePackageVersions(string packageName, NuGetVersion referencedVersion, IEnumerable<Uri> sources, VersionRange currentVersionRange,
-        VersionLock versionLock, PrereleaseReporting prerelease, NuGetFramework targetFrameworkName, string projectFilePath, bool isDevelopmentDependency, int olderThanDays, bool ignoreFailedSources = false)
+    public async Task<NuGetVersion> ResolvePackageVersions(string packageName, NuGetVersion referencedVersion, IEnumerable<Uri> sources, VersionRange currentVersionRange, NuGetFramework targetFrameworkName, string projectFilePath, bool isDevelopmentDependency, CommandModel model)
     {
-        // Determine whether we are interested in pre-releases
-        var includePrerelease = referencedVersion.IsPrerelease;
-        if (prerelease == PrereleaseReporting.Always)
+        var includePrerelease = model.PreRelease switch
         {
-            includePrerelease = true;
-        }
-        else if (prerelease == PrereleaseReporting.Never)
+            PrereleaseReporting.Always => true,
+            PrereleaseReporting.Never => false,
+            _ => referencedVersion.IsPrerelease
+        };
+
+        var cacheKey = (packageName + "-" + includePrerelease + "-" + targetFrameworkName + "-" + model.OlderThanDays).ToLowerInvariant();
+
+        var allVersionsRequest = new Lazy<Task<IReadOnlyList<NuGetVersion>>>(() => _nugetService.GetAllVersions(packageName, sources, includePrerelease, targetFrameworkName, projectFilePath, isDevelopmentDependency, model.OlderThanDays, model.IgnoreFailedSources));
+        var allVersions = await _cache.GetOrAdd(cacheKey, allVersionsRequest).Value.ConfigureAwait(false);
+
+        var floatingBehaviour = model.VersionLock switch
         {
-            includePrerelease = false;
-        }
+            VersionLock.Major => includePrerelease ? NuGetVersionFloatBehavior.PrereleaseMinor : NuGetVersionFloatBehavior.Minor,
+            VersionLock.Minor => includePrerelease ? NuGetVersionFloatBehavior.PrereleasePatch : NuGetVersionFloatBehavior.Patch,
+            _ => includePrerelease ? NuGetVersionFloatBehavior.AbsoluteLatest : NuGetVersionFloatBehavior.Major
+        };
 
-        var cacheKey = (packageName + "-" + includePrerelease + "-" + targetFrameworkName + "-" + olderThanDays).ToLowerInvariant();
-
-        // Get all the available versions
-        var allVersionsRequest = new Lazy<Task<IReadOnlyList<NuGetVersion>>>(() => _nugetService.GetAllVersions(packageName, sources, includePrerelease, targetFrameworkName, projectFilePath, isDevelopmentDependency, olderThanDays, ignoreFailedSources));
-        var allVersions = await _cache.GetOrAdd(cacheKey, allVersionsRequest).Value;
-
-        // Determine the floating behaviour
-        var floatingBehaviour = includePrerelease ? NuGetVersionFloatBehavior.AbsoluteLatest : NuGetVersionFloatBehavior.Major;
-        if (versionLock == VersionLock.Major)
-        {
-            floatingBehaviour = includePrerelease ? NuGetVersionFloatBehavior.PrereleaseMinor : NuGetVersionFloatBehavior.Minor;
-        }
-
-        if (versionLock == VersionLock.Minor)
-        {
-            floatingBehaviour = includePrerelease ? NuGetVersionFloatBehavior.PrereleasePatch : NuGetVersionFloatBehavior.Patch;
-        }
-
-        string releasePrefix = null;
+        var releasePrefix = string.Empty;
         if (referencedVersion.IsPrerelease)
         {
             releasePrefix = referencedVersion.ReleaseLabels.First(); // TODO Not sure exactly what to do for this bit

@@ -1,9 +1,6 @@
-﻿using NuGet.Versioning;
-using System;
-using System.IO;
-using System.IO.Abstractions;
-using System.Linq;
+﻿using System.IO.Abstractions;
 using System.Text.RegularExpressions;
+using NuGet.Versioning;
 
 namespace DotNetOutdated.Core.Services;
 
@@ -35,7 +32,7 @@ public class CentralPackageVersionManagementService : ICentralPackageVersionMana
 
                 if (cpvmFile != null)
                 {
-                    var fileContent = string.Empty;
+                    string fileContent;
 
                     using (var reader = cpvmFile.OpenText())
                     {

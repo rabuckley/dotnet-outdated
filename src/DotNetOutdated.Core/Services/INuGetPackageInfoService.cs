@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using NuGet.Frameworks;
+﻿using NuGet.Frameworks;
 using NuGet.Versioning;
 
 namespace DotNetOutdated.Core.Services;

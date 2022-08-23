@@ -1,4 +1,4 @@
-﻿namespace DotNetOutdated.Models;
+namespace DotNetOutdated.Models;
 
 public enum DependencyUpgradeSeverity
 {

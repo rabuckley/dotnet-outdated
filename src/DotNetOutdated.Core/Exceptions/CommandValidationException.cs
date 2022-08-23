@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace DotNetOutdated.Core.Exceptions;
+﻿namespace DotNetOutdated.Core.Exceptions;
 
 public class CommandValidationException : Exception
 {

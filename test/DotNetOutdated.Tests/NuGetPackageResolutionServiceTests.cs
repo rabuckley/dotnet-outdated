@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using DotNetOutdated.Core;
+﻿using DotNetOutdated.Core;
+using DotNetOutdated.Core.Models;
 using DotNetOutdated.Core.Services;
 using Moq;
 using NuGet.Frameworks;
@@ -12,8 +10,8 @@ namespace DotNetOutdated.Tests;
 
 public class NuGetPackageResolutionServiceTests
 {
-    private string packageName = "MyPackage";
-    private NuGetPackageResolutionService _nuGetPackageResolutionService;
+    private const string PackageName = "MyPackage";
+    private readonly NuGetPackageResolutionService _nuGetPackageResolutionService;
 
     public NuGetPackageResolutionServiceTests()
     {
@@ -36,7 +34,7 @@ public class NuGetPackageResolutionServiceTests
         };
 
         var nuGetPackageInfoService = new Mock<INuGetPackageInfoService>();
-        nuGetPackageInfoService.Setup(service => service.GetAllVersions(packageName, It.IsAny<List<Uri>>(), It.IsAny<bool>(), It.IsAny<NuGetFramework>(), It.IsAny<string>(), It.IsAny<bool>(), 0, It.IsAny<bool>()))
+        nuGetPackageInfoService.Setup(service => service.GetAllVersions(PackageName, It.IsAny<List<Uri>>(), It.IsAny<bool>(), It.IsAny<NuGetFramework>(), It.IsAny<string>(), It.IsAny<bool>(), 0, It.IsAny<bool>()))
             .ReturnsAsync(availableVersions);
 
         _nuGetPackageResolutionService = new NuGetPackageResolutionService(nuGetPackageInfoService.Object);
@@ -59,9 +57,14 @@ public class NuGetPackageResolutionServiceTests
     public async Task ResolvesVersion_Correctly(string current, VersionLock versionLock, PrereleaseReporting prerelease, string latest)
     {
         // Arrange
+        var model = new CommandModel
+        {
+            VersionLock = versionLock,
+            PreRelease = prerelease,
+        };
 
         // Act
-        var latestVersion = await _nuGetPackageResolutionService.ResolvePackageVersions(packageName, NuGetVersion.Parse(current), new List<Uri>(), VersionRange.Parse(current), versionLock, prerelease, null, null, false, 0);
+        var latestVersion = await _nuGetPackageResolutionService.ResolvePackageVersions(PackageName, NuGetVersion.Parse(current), new List<Uri>(), VersionRange.Parse(current), model, null!, null!, false).ConfigureAwait(false);
 
         // Assert
         Assert.Equal(NuGetVersion.Parse(latest), latestVersion);

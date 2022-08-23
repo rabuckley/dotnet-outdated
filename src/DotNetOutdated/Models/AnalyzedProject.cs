@@ -1,4 +1,3 @@
-﻿using System.Collections.Generic;
 using DotNetOutdated.Core.Models;
 using DotNetOutdated.Services;
 using Newtonsoft.Json;
@@ -11,13 +10,13 @@ namespace DotNetOutdated.Models;
 [JsonObject(MemberSerialization.OptIn)]
 public class AnalyzedProject
 {
-    [JsonProperty(Order=2)]
+    [JsonProperty(Order = 2)]
     public IReadOnlyList<AnalyzedTargetFramework> TargetFrameworks { get; }
 
-    [JsonProperty(Order=0)]
+    [JsonProperty(Order = 0)]
     public string Name { get; set; }
 
-    [JsonProperty(Order=1)]
+    [JsonProperty(Order = 1)]
     public string FilePath { get; set; }
 
     public AnalyzedProject(string name, string filePath, IEnumerable<AnalyzedTargetFramework> targetFrameworks)
@@ -31,10 +30,10 @@ public class AnalyzedProject
 [JsonObject(MemberSerialization.OptIn)]
 public class AnalyzedTargetFramework
 {
-    [JsonProperty(Order=1)]
+    [JsonProperty(Order = 1)]
     public IReadOnlyList<AnalyzedDependency> Dependencies { get; }
 
-    [JsonProperty(Order=0)]
+    [JsonProperty(Order = 0)]
     [JsonConverter(typeof(ToStringJsonConverter))]
     public NuGetFramework Name { get; set; }
 
@@ -80,13 +79,13 @@ public class AnalyzedDependency
 
     [JsonProperty(Order = 1)]
     [JsonConverter(typeof(ToStringJsonConverter))]
-    public NuGetVersion ResolvedVersion => _dependency.ResolvedVersion;
+    public NuGetVersion? ResolvedVersion => _dependency.ResolvedVersion;
 
-    [JsonProperty(Order=2)]
+    [JsonProperty(Order = 2)]
     [JsonConverter(typeof(ToStringJsonConverter))]
-    public NuGetVersion LatestVersion { get; set; }
+    public NuGetVersion? LatestVersion { get; set; }
 
-    [JsonProperty(Order=3)]
+    [JsonProperty(Order = 3)]
     [JsonConverter(typeof(StringEnumConverter))]
     public DependencyUpgradeSeverity UpgradeSeverity
     {

@@ -1,9 +1,7 @@
+using System.IO.Abstractions.TestingHelpers;
 using DotNetOutdated.Core.Exceptions;
 using DotNetOutdated.Core.Resources;
 using DotNetOutdated.Core.Services;
-using System.Collections.Generic;
-using System.IO.Abstractions.TestingHelpers;
-using System.Linq;
 using Xunit;
 using XFS = System.IO.Abstractions.TestingHelpers.MockUnixSupport;
 

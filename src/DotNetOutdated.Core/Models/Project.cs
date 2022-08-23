@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using NuGet.Frameworks;
+﻿using NuGet.Frameworks;
 using NuGet.Versioning;
 
 namespace DotNetOutdated.Core.Models;
@@ -50,7 +48,7 @@ public class Dependency
 
     public string Name { get; }
 
-    public NuGetVersion ResolvedVersion { get; }
+    public NuGetVersion? ResolvedVersion { get; }
 
     public VersionRange VersionRange { get; }
 

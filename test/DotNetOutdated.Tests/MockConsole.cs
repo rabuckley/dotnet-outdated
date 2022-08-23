@@ -1,6 +1,3 @@
-using System;
-using System.IO;
-using System.Text;
 using McMaster.Extensions.CommandLineUtils;
 
 namespace DotNetOutdated.Tests;
@@ -41,33 +38,10 @@ public class MockConsole : IConsole
     }
     public ConsoleColor BackgroundColor { get; set; }
 
-    // build warning because it is not used
-#pragma warning disable 67
-    public event ConsoleCancelEventHandler CancelKeyPress;
-#pragma warning restore 67
+    public event ConsoleCancelEventHandler? CancelKeyPress;
 
     public void ResetColor()
     {
         throw new NotImplementedException();
     }
-
-}
-
-internal class MockTextWriter : TextWriter
-{
-    private readonly StringBuilder _sb;
-
-    public MockTextWriter()
-    {
-        _sb = new StringBuilder();
-    }
-
-    public override void Write(char c)
-    {
-        _sb.Append(c);
-    }
-
-    public string Contents => _sb.ToString();
-
-    public override Encoding Encoding => Encoding.Unicode;
 }

@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace DotNetOutdated.Core.Services;
+﻿namespace DotNetOutdated.Core.Services;
 
 public interface IProjectDiscoveryService
 {

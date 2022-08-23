@@ -1,4 +1,3 @@
-﻿using System.Collections.Generic;
 using DotNetOutdated.Models;
 using NuGet.Frameworks;
 using NuGet.Versioning;

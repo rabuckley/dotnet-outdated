@@ -1,43 +1,41 @@
-﻿using System.Collections.Generic;
-using System.Linq;
 using DotNetOutdated.Models;
 
 namespace DotNetOutdated;
 
 public static class ProjectExtensions
 {
-    public static List<ConsolidatedPackage> ConsolidatePackages(this List<AnalyzedProject> projects)
+    public static List<ConsolidatedPackage> ConsolidatePackages(this IEnumerable<AnalyzedProject> projects)
     {
         // Get a flattened view of all the outdated packages
         var outdated = from p in projects
-            from f in p.TargetFrameworks
-            from d in f.Dependencies
-            where d.LatestVersion > d.ResolvedVersion
-            select new
-            {
-                Project = p.Name,
-                ProjectFilePath = p.FilePath,
-                TargetFramework = f.Name,
-                Dependency = d.Name,
-                ResolvedVersion = d.ResolvedVersion,
-                LatestVersion = d.LatestVersion,
-                IsAutoReferenced = d.IsAutoReferenced,
-                IsTransitive = d.IsTransitive,
-                IsVersionCentrallyManaged = d.IsVersionCentrallyManaged,
-                UpgradeSeverity = d.UpgradeSeverity
-            };
+                       from f in p.TargetFrameworks
+                       from d in f.Dependencies
+                       where d.LatestVersion > d.ResolvedVersion
+                       select new
+                       {
+                           Project = p.Name,
+                           ProjectFilePath = p.FilePath,
+                           TargetFramework = f.Name,
+                           Dependency = d.Name,
+                           ResolvedVersion = d.ResolvedVersion,
+                           LatestVersion = d.LatestVersion,
+                           IsAutoReferenced = d.IsAutoReferenced,
+                           IsTransitive = d.IsTransitive,
+                           IsVersionCentrallyManaged = d.IsVersionCentrallyManaged,
+                           UpgradeSeverity = d.UpgradeSeverity
+                       };
 
         // Now group them by package
         var consolidatedPackages = outdated.GroupBy(p => new
-            {
-                p.Dependency,
-                p.ResolvedVersion,
-                p.LatestVersion,
-                p.IsTransitive,
-                p.IsAutoReferenced,
-                p.IsVersionCentrallyManaged,
-                p.UpgradeSeverity
-            })
+        {
+            p.Dependency,
+            p.ResolvedVersion,
+            p.LatestVersion,
+            p.IsTransitive,
+            p.IsAutoReferenced,
+            p.IsVersionCentrallyManaged,
+            p.UpgradeSeverity
+        })
             .Select(gp => new ConsolidatedPackage
             {
                 Name = gp.Key.Dependency,

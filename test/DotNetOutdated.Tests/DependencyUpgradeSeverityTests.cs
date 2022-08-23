@@ -2,19 +2,11 @@ using DotNetOutdated.Core.Models;
 using DotNetOutdated.Models;
 using NuGet.Versioning;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace DotNetOutdated.Tests;
 
 public class DependencyUpgradeSeverityTests
 {
-    private readonly ITestOutputHelper _output;
-
-    public DependencyUpgradeSeverityTests(ITestOutputHelper output)
-    {
-        _output = output;
-    }
-
     [Theory]
     [InlineData("1.2.3    ", "2.0.0    ")]
     [InlineData("1.0.13   ", "2.0.1    ")]
@@ -84,7 +76,7 @@ public class DependencyUpgradeSeverityTests
         Assert.Equal(DependencyUpgradeSeverity.None, dependency.UpgradeSeverity);
     }
 
-    private AnalyzedDependency CreateAnalyzedDependency(NuGetVersion resolvedVersion, NuGetVersion latestVersion)
+    private static AnalyzedDependency CreateAnalyzedDependency(NuGetVersion resolvedVersion, NuGetVersion latestVersion)
     {
         return new AnalyzedDependency(new Dependency("Does not matter", VersionRange.All, resolvedVersion, false, false, false, false), latestVersion);
     }

@@ -15,7 +15,7 @@ public class DotNetRestoreService : IDotNetRestoreService
         
     public RunStatus Restore(string projectPath)
     {
-        string[] arguments = new[] {"restore", $"\"{projectPath}\""};
+        string[] arguments = {"restore", $"\"{projectPath}\""};
 
         return _dotNetRunner.Run(_fileSystem.Path.GetDirectoryName(projectPath), arguments);
     }

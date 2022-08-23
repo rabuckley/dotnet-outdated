@@ -1,19 +1,11 @@
 using DotNetOutdated.Models;
 using NuGet.Versioning;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace DotNetOutdated.Tests;
 
 public class VersionNumberColoringTests
 {
-    private readonly ITestOutputHelper _output;
-
-    public VersionNumberColoringTests(ITestOutputHelper output)
-    {
-        _output = output;
-    }
-
     [Theory]
     [InlineData("1.2.3    ", "2.0.0    ")]
     [InlineData("1.0.13   ", "2.0.1    ")]
@@ -25,7 +17,7 @@ public class VersionNumberColoringTests
 
         var console = new MockConsole();
 
-        Program.WriteColoredUpgrade(DependencyUpgradeSeverity.Major, resolvedVersion, latestVersion, 9, 9, console);
+        DotnetOutdatedCommandHandler.WriteColoredUpgrade(DependencyUpgradeSeverity.Major, resolvedVersion, latestVersion, 9, 9, console);
 
         Assert.Equal($"{resolved} -> [Red]{latest}[White]", console.WrittenOut);
     }
@@ -40,7 +32,7 @@ public class VersionNumberColoringTests
 
         var console = new MockConsole();
 
-        Program.WriteColoredUpgrade(DependencyUpgradeSeverity.Major, resolvedVersion, latestVersion, 9, 9, console);
+        DotnetOutdatedCommandHandler.WriteColoredUpgrade(DependencyUpgradeSeverity.Major, resolvedVersion, latestVersion, 9, 9, console);
 
         Assert.Equal($"{resolved} -> [Red]{latest}[White]", console.WrittenOut);
     }
@@ -56,9 +48,9 @@ public class VersionNumberColoringTests
 
         var console = new MockConsole();
 
-        Program.WriteColoredUpgrade(DependencyUpgradeSeverity.Minor, resolvedVersion, latestVersion, 9, 9, console);
+        DotnetOutdatedCommandHandler.WriteColoredUpgrade(DependencyUpgradeSeverity.Minor, resolvedVersion, latestVersion, 9, 9, console);
         var firstDot = latest.IndexOf(".") + 1;
-        Assert.Equal($"{resolved} -> {latest.Substring(0, firstDot)}[Yellow]{latest.Substring(firstDot)}[White]", console.WrittenOut);
+        Assert.Equal($"{resolved} -> {latest[..firstDot]}[Yellow]{latest[firstDot..]}[White]", console.WrittenOut);
     }
 
 
@@ -73,8 +65,8 @@ public class VersionNumberColoringTests
 
         var console = new MockConsole();
 
-        Program.WriteColoredUpgrade(DependencyUpgradeSeverity.Patch, resolvedVersion, latestVersion, 9, 9, console);
+        DotnetOutdatedCommandHandler.WriteColoredUpgrade(DependencyUpgradeSeverity.Patch, resolvedVersion, latestVersion, 9, 9, console);
         var secondDot = latest.IndexOf(".", latest.IndexOf(".") + 1) + 1;
-        Assert.Equal($"{resolved} -> {latest.Substring(0, secondDot)}[Green]{latest.Substring(secondDot)}[White]", console.WrittenOut);
+        Assert.Equal($"{resolved} -> {latest[..secondDot]}[Green]{latest[secondDot..]}[White]", console.WrittenOut);
     }
 }

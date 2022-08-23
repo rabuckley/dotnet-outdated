@@ -360,7 +360,9 @@ public class DotnetOutdatedCommandHandler
 
         await Task.WhenAll(tasks).ConfigureAwait(false);
 
-        if (outdatedFrameworks.IsEmpty)
+#pragma warning disable CA1836
+        if (outdatedFrameworks.Count > 0)
+#pragma warning restore CA1836
         {
             outdatedProjects.Add(new AnalyzedProject(project.Name, project.FilePath, outdatedFrameworks));
         }
@@ -397,7 +399,9 @@ public class DotnetOutdatedCommandHandler
 
         await Task.WhenAll(tasks).ConfigureAwait(false);
 
-        if (outdatedDependencies.IsEmpty)
+#pragma warning disable CA1836
+        if (outdatedDependencies.Count > 0)
+#pragma warning restore CA1836
         {
             outdatedFrameworks.Add(new AnalyzedTargetFramework(targetFramework.Name, outdatedDependencies));
         }

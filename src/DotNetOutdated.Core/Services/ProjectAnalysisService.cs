@@ -21,10 +21,10 @@ public class ProjectAnalysisService : IProjectAnalysisService
         _fileSystem = fileSystem;
     }
 
-    public IEnumerable<Project> AnalyzeProject(string projectPath, bool runRestore, bool includeTransitiveDependencies,
+    public async Task<IEnumerable<Project>> AnalyzeProjectAsync(string projectPath, bool runRestore, bool includeTransitiveDependencies,
         int transitiveDepth)
     {
-        var dependencyGraph = _dependencyGraphService.GenerateDependencyGraph(projectPath);
+        var dependencyGraph = await _dependencyGraphService.GenerateDependencyGraphAsync(projectPath).ConfigureAwait(false);
 
         var projects = new List<Project>();
         foreach (var packageSpec in dependencyGraph.Projects.Where(p =>
@@ -33,7 +33,7 @@ public class ProjectAnalysisService : IProjectAnalysisService
             // Restore the packages
             if (runRestore)
             {
-                _dotNetRestoreService.Restore(packageSpec.FilePath);
+                await _dotNetRestoreService.RestoreAsync(packageSpec.FilePath).ConfigureAwait(false);
             }
 
             // Load the lock file
@@ -41,8 +41,7 @@ public class ProjectAnalysisService : IProjectAnalysisService
             var lockFile = LockFileUtilities.GetLockFile(lockFilePath, NullLogger.Instance);
 
             // Create a project
-            var project = new Project(packageSpec.Name, packageSpec.FilePath,
-                packageSpec.RestoreMetadata.Sources.Select(s => s.SourceUri).ToList(), packageSpec.Version);
+            var project = new Project(packageSpec.Name, packageSpec.FilePath, packageSpec.RestoreMetadata.Sources.Select(s => s.SourceUri).ToList(), packageSpec.Version);
             projects.Add(project);
 
             // Get the target frameworks with their dependencies
@@ -51,8 +50,7 @@ public class ProjectAnalysisService : IProjectAnalysisService
                 var targetFramework = new TargetFramework(targetFrameworkInformation.FrameworkName);
                 project.TargetFrameworks.Add(targetFramework);
 
-                var target = lockFile.Targets.FirstOrDefault(t =>
-                    t.TargetFramework.Equals(targetFrameworkInformation.FrameworkName));
+                var target = lockFile.Targets.FirstOrDefault(t => t.TargetFramework.Equals(targetFrameworkInformation.FrameworkName));
 
                 if (target == null)
                 {

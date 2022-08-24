@@ -4,5 +4,5 @@ namespace DotNetOutdated.Core.Services;
 
 public interface IDependencyGraphService
 {
-    DependencyGraphSpec GenerateDependencyGraph(string projectPath);
+    Task<DependencyGraphSpec> GenerateDependencyGraphAsync(string projectPath);
 }

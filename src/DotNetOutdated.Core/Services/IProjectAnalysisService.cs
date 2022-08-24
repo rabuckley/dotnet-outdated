@@ -4,5 +4,5 @@ namespace DotNetOutdated.Core.Services;
 
 public interface IProjectAnalysisService
 {
-    IEnumerable<Project> AnalyzeProject(string projectPath, bool runRestore, bool includeTransitiveDependencies, int transitiveDepth);
+    Task<IEnumerable<Project>> AnalyzeProjectAsync(string projectPath, bool runRestore, bool includeTransitiveDependencies, int transitiveDepth);
 }

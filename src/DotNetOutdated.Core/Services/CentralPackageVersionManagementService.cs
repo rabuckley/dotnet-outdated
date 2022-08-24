@@ -7,15 +7,13 @@ namespace DotNetOutdated.Core.Services;
 public class CentralPackageVersionManagementService : ICentralPackageVersionManagementService
 {
     private readonly IFileSystem _fileSystem;
-    private readonly IDotNetRestoreService _dotNetRestoreService;
 
-    public CentralPackageVersionManagementService(IFileSystem fileSystem, IDotNetRestoreService dotNetRestoreService)
+    public CentralPackageVersionManagementService(IFileSystem fileSystem)
     {
         _fileSystem = fileSystem;
-        _dotNetRestoreService = dotNetRestoreService;
     }
 
-    public RunStatus AddPackage(string projectFilePath, string packageName, NuGetVersion version, bool noRestore)
+    public async Task<RunStatus> AddPackageAsync(string projectFilePath, string packageName, NuGetVersion version)
     {
         var status = new RunStatus(string.Empty, string.Empty, 0);
 
@@ -36,7 +34,7 @@ public class CentralPackageVersionManagementService : ICentralPackageVersionMana
 
                     using (var reader = cpvmFile.OpenText())
                     {
-                        fileContent = reader.ReadToEnd();
+                        fileContent = await reader.ReadToEndAsync().ConfigureAwait(false);
                     }
 
                     if (fileContent.IndexOf($"\"{packageName}\"", StringComparison.OrdinalIgnoreCase) != -1)
@@ -45,7 +43,7 @@ public class CentralPackageVersionManagementService : ICentralPackageVersionMana
 
                         if (newFileContent != fileContent)
                         {
-                            _fileSystem.File.WriteAllText(cpvmFile.FullName, newFileContent);
+                            await _fileSystem.File.WriteAllTextAsync(cpvmFile.FullName, newFileContent).ConfigureAwait(false);
                         }
 
                         foundCPVMFile = true;
@@ -55,16 +53,6 @@ public class CentralPackageVersionManagementService : ICentralPackageVersionMana
                 if (!foundCPVMFile)
                 {
                     directoryInfo = directoryInfo.Parent;
-                }
-            }
-
-            if (!noRestore)
-            {
-                var restoreStatus = _dotNetRestoreService.Restore(projectFilePath);
-
-                if (!restoreStatus.IsSuccess)
-                {
-                    status = new RunStatus(string.Empty, "Failed to restore project after upgrading!", -1);
                 }
             }
         }

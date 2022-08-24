@@ -35,7 +35,7 @@ builder.AddMiddleware((context, next) =>
 
     context.BindingContext.AddService<INuGetPackageResolutionService>(s => new NuGetPackageResolutionService(s.GetService<INuGetPackageInfoService>()!));
 
-    context.BindingContext.AddService<ICentralPackageVersionManagementService>(s => new CentralPackageVersionManagementService(s.GetService<IFileSystem>()!, s.GetService<IDotNetRestoreService>()!));
+    context.BindingContext.AddService<ICentralPackageVersionManagementService>(s => new CentralPackageVersionManagementService(s.GetService<IFileSystem>()!));
 
     return next(context);
 });

@@ -2,5 +2,5 @@
 
 public interface IDotNetRestoreService
 {
-    RunStatus Restore(string projectPath);
+    Task<RunStatus> RestoreAsync(string projectPath);
 }

@@ -14,25 +14,28 @@ public class DotNetAddPackageService : IDotNetAddPackageService
         _fileSystem = fileSystem;
     }
 
-    public RunStatus AddPackage(string projectPath, string packageName, string frameworkName, NuGetVersion version)
-    {
-        return AddPackage(projectPath, packageName, frameworkName, version, false);
-    }
-
-    public RunStatus AddPackage(string projectPath, string packageName, string frameworkName, NuGetVersion version, bool noRestore, bool ignoreFailedSource=false)
+    public async Task<RunStatus> AddPackage(string projectPath, string packageName, string frameworkName, NuGetVersion version, bool ignoreFailedSources)
     {
         var projectName = _fileSystem.Path.GetFileName(projectPath);
-            
-        var arguments = new List<string>{"add", $"\"{projectName}\"", "package", packageName, "-v", version.ToString(), "-f", $"\"{frameworkName}\"" };
-        if (noRestore)
+
+        var arguments = new List<string>
         {
-            arguments.Add("--no-restore");
-        }
-        if (ignoreFailedSource)
+            "add",
+            $"\"{projectName}\"",
+            "package",
+            packageName,
+            "-v",
+            version.ToString(),
+            "-f",
+            $"\"{frameworkName}\"",
+            "--no-restore"
+        };
+
+        if (ignoreFailedSources)
         {
             arguments.Add("--ignore-failed-sources");
         }
 
-        return _dotNetRunner.Run(_fileSystem.Path.GetDirectoryName(projectPath), arguments.ToArray());
+        return await _dotNetRunner.Run(_fileSystem.Path.GetDirectoryName(projectPath), arguments.ToArray()).ConfigureAwait(false);
     }
 }

@@ -5,7 +5,9 @@ using System.Collections.Concurrent;
 using System.CommandLine.Invocation;
 using System.Diagnostics;
 using System.IO.Abstractions;
+using System.Text;
 using System.Text.RegularExpressions;
+using DotNetOutdated.Core;
 using DotNetOutdated.Core.Exceptions;
 using DotNetOutdated.Core.Models;
 using DotNetOutdated.Core.Services;
@@ -31,6 +33,7 @@ public class DotnetOutdatedCommandHandler
     private readonly ICentralPackageVersionManagementService _centralPackageVersionManagementService;
     private readonly IDotNetAddPackageService _dotNetAddPackageService;
     private readonly INuGetPackageResolutionService _nugetPackageResolutionService;
+    private readonly IDotNetRestoreService _dotNetRestoreService;
 
     public DotnetOutdatedCommandHandler(InvocationContext context, CommandModel model)
     {
@@ -43,6 +46,7 @@ public class DotnetOutdatedCommandHandler
         _centralPackageVersionManagementService = context.BindingContext.GetService<ICentralPackageVersionManagementService>() ?? throw new InvalidOperationException($"{nameof(ICentralPackageVersionManagementService)} service not found");
         _dotNetAddPackageService = context.BindingContext.GetService<IDotNetAddPackageService>() ?? throw new InvalidOperationException($"{nameof(IDotNetAddPackageService)} service not found");
         _nugetPackageResolutionService = context.BindingContext.GetService<INuGetPackageResolutionService>() ?? throw new InvalidOperationException($"{nameof(INuGetPackageResolutionService)} service not found");
+        _dotNetRestoreService = context.BindingContext.GetService<IDotNetRestoreService>() ?? throw new InvalidOperationException($"{nameof(IDotNetRestoreService)} service not found");
     }
 
     public async Task<int> ExecuteAsync()
@@ -51,6 +55,12 @@ public class DotnetOutdatedCommandHandler
         {
             var stopwatch = Stopwatch.StartNew();
 
+            if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("DOTNET_HOST_PATH")))
+            {
+                Environment.SetEnvironmentVariable("DOTNET_HOST_PATH", "dotnet");
+            }
+
+
             // If no path is set, use the current directory
             if (string.IsNullOrEmpty(Model.Path))
             {
@@ -58,35 +68,14 @@ public class DotnetOutdatedCommandHandler
             }
 
             // Get all the projects
-            _console.Write("Discovering projects...");
+            _console.WriteLine("Discovering projects...");
 
             DefaultCredentialServiceUtility.SetupDefaultCredentialService(new NullLogger(), true);
 
             var projectPaths = _projectDiscoveryService.DiscoverProjects(Model.Path, Model.Recursive);
 
-            if (!_console.IsOutputRedirected)
-            {
-                ClearCurrentConsoleLine();
-            }
-            else
-            {
-                _console.WriteLine();
-            }
-
-            // Analyze the projects
-            _console.Write("Analyzing project(s)...");
-
-            var projects = projectPaths.SelectMany(path =>
-                _projectAnalysisService.AnalyzeProject(path, false, Model.Transitive, Model.TransitiveDepth)).ToList();
-
-            if (!_console.IsOutputRedirected)
-            {
-                ClearCurrentConsoleLine();
-            }
-            else
-            {
-                _console.WriteLine();
-            }
+            _console.WriteLine("Analyzing project(s)...");
+            var projects = (await projectPaths.SelectManyAsync(path => _projectAnalysisService.AnalyzeProjectAsync(path, false, Model.Transitive, Model.TransitiveDepth)).ConfigureAwait(false)).ToList();
 
             // Analyze the dependencies
             var outdatedProjects = await AnalyzeDependencies(projects).ConfigureAwait(false);
@@ -95,7 +84,12 @@ public class DotnetOutdatedCommandHandler
             {
                 ReportOutdatedDependencies(outdatedProjects);
 
-                var success = UpgradePackages(outdatedProjects);
+                var success = await UpgradePackagesAsync(outdatedProjects).ConfigureAwait(false);
+
+                if (!Model.NoRestore)
+                {
+                    await RestoreSolution().ConfigureAwait(false);
+                }
 
                 // Output report file
                 if (Model.OutputFilename is not null)
@@ -119,18 +113,31 @@ public class DotnetOutdatedCommandHandler
             }
 
             _console.WriteLine($"Elapsed: {stopwatch.Elapsed}");
-
             return 0;
         }
         catch (CommandValidationException e)
         {
             _reporter.Error(e.Message);
-
             return 1;
         }
     }
 
-    private bool UpgradePackages(List<AnalyzedProject> projects)
+    private async Task RestoreSolution()
+    {
+        var restoreStatus = await _dotNetRestoreService.RestoreAsync(Model.Path).ConfigureAwait(false);
+        if (restoreStatus.IsSuccess)
+        {
+            _console.WriteLine("Restore completed successfully.", ReportingColors.UpgradeSuccess);
+        }
+        else
+        {
+            _console.WriteLine("Failed to restore project after upgrading.", ReportingColors.UpgradeFailure);
+        }
+
+        _console.WriteLine();
+    }
+
+    private async Task<bool> UpgradePackagesAsync(IEnumerable<AnalyzedProject> projects)
     {
         var success = true;
         _console.WriteLine();
@@ -159,39 +166,53 @@ public class DotnetOutdatedCommandHandler
                 upgradePackage = Prompt.GetYesNo("Do you wish to upgrade this package?", true);
             }
 
-            if (upgradePackage)
+            if (!upgradePackage)
             {
-                _console.Write("Upgrading package ");
-                _console.Write(package.Description, ReportingColors.PackageName);
-                _console.Write("...");
-                _console.WriteLine();
-
-                foreach (var project in package.Projects)
-                {
-                    var status = package.IsVersionCentrallyManaged
-                        ? _centralPackageVersionManagementService.AddPackage(project.ProjectFilePath, package.Name, package.LatestVersion, Model.NoRestore)
-                        : _dotNetAddPackageService.AddPackage(project.ProjectFilePath, package.Name, project.Framework.ToString(), package.LatestVersion, Model.NoRestore, Model.IgnoreFailedSources);
-
-                    if (status.IsSuccess)
-                    {
-                        _console.Write($"Project {project.Description} upgraded successfully", ReportingColors.UpgradeSuccess);
-                        _console.WriteLine();
-                    }
-                    else
-                    {
-                        success = false;
-                        _console.Write($"An error occurred while upgrading {project.Project}", ReportingColors.UpgradeFailure);
-                        _console.WriteLine();
-                        _console.Write(status.Errors, ReportingColors.UpgradeFailure);
-                        _console.WriteLine();
-                    }
-                }
+                continue;
             }
 
-            _console.WriteLine();
+            _console.Write("Upgrading package ");
+            _console.Write(package.Description, ReportingColors.PackageName);
+
+            foreach (var project in package.Projects)
+            {
+                RunStatus status;
+                if (package.IsVersionCentrallyManaged)
+                {
+                    status = await _centralPackageVersionManagementService.AddPackageAsync(project.ProjectFilePath, package.Name, package.LatestVersion).ConfigureAwait(false);
+                }
+                else
+                {
+                    status = await _dotNetAddPackageService.AddPackage(project.ProjectFilePath, package.Name, project.Framework.ToString(), package.LatestVersion, Model.IgnoreFailedSources).ConfigureAwait(false);
+                }
+
+                if (status.IsSuccess)
+                {
+                    continue;
+                }
+
+                success = false;
+                _console.WriteLine($"An error occurred while upgrading {project.Project}", ReportingColors.UpgradeFailure);
+                _console.WriteLine(status.Errors, ReportingColors.UpgradeFailure);
+            }
+
+            IndicateOutcome(success);
         }
 
+        _console.WriteLine();
         return success;
+    }
+
+    private void IndicateOutcome(bool success)
+    {
+        if (success)
+        {
+            _console.WriteLine(" [✓]", ReportingColors.UpgradeSuccess);
+        }
+        else
+        {
+            _console.WriteLine(" [✗]", ReportingColors.UpgradeFailure);
+        }
     }
 
     private void PrintColorLegend()
@@ -236,15 +257,11 @@ public class DotnetOutdatedCommandHandler
             .TakeWhile(p => p.matches)
             .Select(p => p.part));
 
-        if (matching.Length > 0)
-        {
-            matching += ".";
-        }
-
         var rest = new Regex($"^{matching}").Replace(latestString, "");
 
         console.Write($"{matching}");
         console.Write(rest, GetUpgradeSeverityColor(upgradeSeverity));
+
     }
 
     private void ReportOutdatedDependencies(List<AnalyzedProject> projects)
@@ -258,19 +275,20 @@ public class DotnetOutdatedCommandHandler
             {
                 WriteTargetFramework(targetFramework);
 
-                var dependencies = targetFramework.Dependencies
-                    .OrderBy(d => d.Name)
-                    .ToList();
-
+                var dependencies = targetFramework.Dependencies.OrderBy(d => d.Name).ToList();
                 var columnWidths = dependencies.DetermineColumnWidths();
 
                 foreach (var dependency in dependencies)
                 {
+                    if (dependency.ResolvedVersion == dependency.LatestVersion)
+                    {
+                        continue;
+                    }
+
                     _console.WriteIndent();
                     _console.Write(dependency.Description.PadRight(columnWidths[0] + 2));
 
-                    WriteColoredUpgrade(dependency.UpgradeSeverity, dependency.ResolvedVersion,
-                        dependency.LatestVersion, columnWidths[1], columnWidths[2], _console);
+                    WriteColoredUpgrade(dependency.UpgradeSeverity, dependency.ResolvedVersion, dependency.LatestVersion, columnWidths[1], columnWidths[2], _console);
 
                     _console.WriteLine();
                 }
@@ -279,21 +297,16 @@ public class DotnetOutdatedCommandHandler
             _console.WriteLine();
         }
 
-        if (projects.SelectMany(p => p.TargetFrameworks).SelectMany(f => f.Dependencies)
-            .Any(d => d.UpgradeSeverity == DependencyUpgradeSeverity.Unknown))
+        if (projects.SelectMany(p => p.TargetFrameworks).SelectMany(f => f.Dependencies).Any(d => d.UpgradeSeverity == DependencyUpgradeSeverity.Unknown))
         {
-            _console.WriteLine(
-                "Errors occurred while analyzing dependencies for some of your projects. Are you sure you can connect to all your configured NuGet servers?",
-                ConsoleColor.Red);
+            _console.WriteLine("Errors occurred while analyzing dependencies for some of your projects. Are you sure you can connect to all your configured NuGet servers?", ConsoleColor.Red);
             if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("DOTNET_HOST_PATH")))
             {
                 // Issue #255: Sometimes the dotnet executable sets this
                 // variable for you, sometimes it doesn't. If it's not
                 // present, credential providers will be skipped.
                 _console.WriteLine();
-                _console.WriteLine(
-                    "Unable to find DOTNET_HOST_PATH environment variable. If you use credential providers for your NuGet sources you need to have this set to the path to the `dotnet` executable.",
-                    ConsoleColor.Red);
+                _console.WriteLine("Unable to find DOTNET_HOST_PATH environment variable. If you use credential providers for your NuGet sources you need to have this set to the path to the `dotnet` executable.", ConsoleColor.Red);
             }
 
             _console.WriteLine();
@@ -306,7 +319,7 @@ public class DotnetOutdatedCommandHandler
     {
         var outdatedProjects = new ConcurrentBag<AnalyzedProject>();
 
-        _console.Write("Analyzing dependencies...");
+        _console.WriteLine("Analyzing dependencies...");
 
         var tasks = new Task[projects.Count];
 
@@ -317,15 +330,7 @@ public class DotnetOutdatedCommandHandler
         }
 
         await Task.WhenAll(tasks).ConfigureAwait(false);
-
-        if (!_console.IsOutputRedirected)
-        {
-            ClearCurrentConsoleLine();
-        }
-        else
-        {
-            _console.WriteLine();
-        }
+        _console.WriteLine();
 
         return outdatedProjects.ToList();
     }
@@ -393,7 +398,6 @@ public class DotnetOutdatedCommandHandler
         for (var index = 0; index < dependencies.Count; index++)
         {
             var dependency = dependencies[index];
-
             tasks[index] = AddOutdatedDependencyIfNeeded(project, targetFramework, dependency, outdatedDependencies);
         }
 
@@ -417,23 +421,12 @@ public class DotnetOutdatedCommandHandler
             latestVersion = await _nugetPackageResolutionService.ResolvePackageVersions(dependency.Name, resolvedVersion, project.Sources, dependency.VersionRange, targetFramework.Name, project.FilePath, dependency.IsDevelopmentDependency, Model).ConfigureAwait(false);
         }
 
-        if (resolvedVersion is null || latestVersion is null || resolvedVersion != latestVersion)
+        if (latestVersion is null || resolvedVersion is null)
         {
-            // special case when there is version installed which is not older than "OlderThan" days makes "latestVersion" to be null
-            if (Model.OlderThanDays > 0 && latestVersion is null)
-            {
-                var absoluteLatestVersion = await _nugetPackageResolutionService.ResolvePackageVersions(dependency.Name, resolvedVersion, project.Sources, dependency.VersionRange, Model, targetFramework.Name, project.FilePath, dependency.IsDevelopmentDependency).ConfigureAwait(false);
-
-                if (resolvedVersion > absoluteLatestVersion)
-                {
-                    outdatedDependencies.Add(new AnalyzedDependency(dependency, latestVersion));
-                }
-            }
-            else
-            {
-                outdatedDependencies.Add(new AnalyzedDependency(dependency, latestVersion));
-            }
+            _console.Error.WriteLine("Error: Unable to resolve dependency {0} {1}", dependency.Name, dependency.ResolvedVersion);
         }
+
+        outdatedDependencies.Add(new AnalyzedDependency(dependency, latestVersion));
     }
 
     private static ConsoleColor GetUpgradeSeverityColor(DependencyUpgradeSeverity? upgradeSeverity)
@@ -475,13 +468,5 @@ public class DotnetOutdatedCommandHandler
         _console.WriteIndent();
         _console.Write($"[{targetFramework.Name}]", ReportingColors.TargetFrameworkName);
         _console.WriteLine();
-    }
-
-    private static void ClearCurrentConsoleLine()
-    {
-        var currentLineCursor = Console.CursorTop;
-        Console.SetCursorPosition(0, Console.CursorTop);
-        Console.Write(new string(' ', Console.BufferWidth));
-        Console.SetCursorPosition(0, currentLineCursor);
     }
 }

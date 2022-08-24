@@ -12,11 +12,10 @@ public class DotNetRestoreService : IDotNetRestoreService
         _dotNetRunner = dotNetRunner;
         _fileSystem = fileSystem;
     }
-        
-    public RunStatus Restore(string projectPath)
+
+    public async Task<RunStatus> RestoreAsync(string projectPath)
     {
         string[] arguments = {"restore", $"\"{projectPath}\""};
-
-        return _dotNetRunner.Run(_fileSystem.Path.GetDirectoryName(projectPath), arguments);
+        return await _dotNetRunner.Run(_fileSystem.Path.GetDirectoryName(projectPath), arguments).ConfigureAwait(false);
     }
 }

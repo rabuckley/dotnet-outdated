@@ -6,7 +6,5 @@ namespace DotNetOutdated.Core.Services;
 
 public interface INuGetPackageResolutionService
 {
-    Task<NuGetVersion> ResolvePackageVersions(string packageName, NuGetVersion referencedVersion, IEnumerable<Uri> sources, VersionRange currentVersionRange, CommandModel model, NuGetFramework targetFrameworkName, string projectFilePath, bool isDevelopmentDependency);
-
     Task<NuGetVersion> ResolvePackageVersions(string packageName, NuGetVersion referencedVersion, IEnumerable<Uri> sources, VersionRange currentVersionRange, NuGetFramework targetFrameworkName, string projectFilePath, bool isDevelopmentDependency, CommandModel model);
 }

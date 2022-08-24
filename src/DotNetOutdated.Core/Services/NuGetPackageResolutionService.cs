@@ -17,7 +17,7 @@ public class NuGetPackageResolutionService : INuGetPackageResolutionService
 
     public async Task<NuGetVersion> ResolvePackageVersions(string packageName, NuGetVersion referencedVersion, IEnumerable<Uri> sources, VersionRange currentVersionRange, CommandModel model, NuGetFramework targetFrameworkName, string projectFilePath, bool isDevelopmentDependency)
     {
-        return await ResolvePackageVersions(packageName, referencedVersion, sources, currentVersionRange, targetFrameworkName, packageName, isDevelopmentDependency, model).ConfigureAwait(false);
+        return await ResolvePackageVersions(packageName, referencedVersion, sources, currentVersionRange, targetFrameworkName, projectFilePath, isDevelopmentDependency, model).ConfigureAwait(false);
     }
     public async Task<NuGetVersion> ResolvePackageVersions(string packageName, NuGetVersion referencedVersion, IEnumerable<Uri> sources, VersionRange currentVersionRange, NuGetFramework targetFrameworkName, string projectFilePath, bool isDevelopmentDependency, CommandModel model)
     {

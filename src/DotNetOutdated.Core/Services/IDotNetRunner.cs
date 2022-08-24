@@ -2,5 +2,5 @@
 
 public interface IDotNetRunner
 {
-    RunStatus Run(string workingDirectory, string[] arguments);
+    Task<RunStatus> Run(string workingDirectory, string[] arguments);
 }

@@ -2,13 +2,13 @@ namespace DotNetOutdated.Core;
 
 class TempDirectory : IDisposable
 {
-    private readonly string tempPath;
-    private readonly string tempDirName;
+    private readonly string _tempPath;
+    private readonly string _tempDirName;
 
     public TempDirectory()
     {
-        tempPath = Path.GetTempPath();
-        tempDirName = Path.GetRandomFileName();
+        _tempPath = Path.GetTempPath();
+        _tempDirName = Path.GetRandomFileName();
         Directory.CreateDirectory(DirectoryPath);
     }
 
@@ -17,5 +17,5 @@ class TempDirectory : IDisposable
         Directory.Delete(DirectoryPath, true);
     }
 
-    public string DirectoryPath => Path.Combine(tempPath, tempDirName);
+    public string DirectoryPath => Path.Combine(_tempPath, _tempDirName);
 }

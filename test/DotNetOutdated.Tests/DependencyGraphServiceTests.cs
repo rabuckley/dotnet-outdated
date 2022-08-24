@@ -13,14 +13,14 @@ public class DependencyGraphServiceTests
     private readonly string _solutionPath = XFS.Path(@"c:\path\proj.sln");
 
     [Fact]
-    public void SuccessfulDotNetRunnerExecution_ReturnsDependencyGraph()
+    public async Task SuccessfulDotNetRunnerExecution_ReturnsDependencyGraph()
     {
         var mockFileSystem = new MockFileSystem(new Dictionary<string, MockFileData>());
 
         // Arrange
         var dotNetRunner = new Mock<IDotNetRunner>();
         dotNetRunner.Setup(runner => runner.Run(It.IsAny<string>(), It.IsAny<string[]>()))
-            .Returns(new RunStatus(string.Empty, string.Empty, 0))
+            .Returns(Task.FromResult(new RunStatus(string.Empty, string.Empty, 0)))
             .Callback((string _, string[] arguments) =>
             {
                 // Grab the temp filename that was passed...
@@ -33,7 +33,7 @@ public class DependencyGraphServiceTests
         var graphService = new DependencyGraphService(dotNetRunner.Object, mockFileSystem);
 
         // Act
-        var dependencyGraph = graphService.GenerateDependencyGraph(_path);
+        var dependencyGraph = await graphService.GenerateDependencyGraphAsync(_path).ConfigureAwait(false);
 
         // Assert
         Assert.NotNull(dependencyGraph);
@@ -43,23 +43,23 @@ public class DependencyGraphServiceTests
     }
 
     [Fact]
-    public void UnsuccessfulDotNetRunnerExecution_Throws()
+    public async Task UnsuccessfulDotNetRunnerExecution_Throws()
     {
         var mockFileSystem = new MockFileSystem(new Dictionary<string, MockFileData>());
 
         // Arrange
         var dotNetRunner = new Mock<IDotNetRunner>();
         dotNetRunner.Setup(runner => runner.Run(It.IsAny<string>(), It.IsAny<string[]>()))
-            .Returns(new RunStatus(string.Empty, string.Empty, 1));
+            .Returns(Task.FromResult(new RunStatus(string.Empty, string.Empty, 1)));
 
         var graphService = new DependencyGraphService(dotNetRunner.Object, mockFileSystem);
 
         // Assert
-        Assert.Throws<CommandValidationException>(() => graphService.GenerateDependencyGraph(_path));
+        await Assert.ThrowsAsync<CommandValidationException>(async () => await graphService.GenerateDependencyGraphAsync(_path).ConfigureAwait(false)).ConfigureAwait(false);
     }
 
     [Fact]
-    public void EmptySolution_ReturnsEmptyDependencyGraph()
+    public async Task EmptySolution_ReturnsEmptyDependencyGraph()
     {
         var mockFileSystem = new MockFileSystem(new Dictionary<string, MockFileData>());
 
@@ -67,7 +67,7 @@ public class DependencyGraphServiceTests
         var dotNetRunner = new Mock<IDotNetRunner>();
 
         dotNetRunner.Setup(runner => runner.Run(It.IsAny<string>(), It.Is<string[]>(a => a[0] == "msbuild" && a[2] == "/t:Restore,GenerateRestoreGraphFile")))
-            .Returns(new RunStatus(string.Empty, string.Empty, 0))
+            .Returns(Task.FromResult(new RunStatus(string.Empty, string.Empty, 0)))
             .Callback((string _, string[] arguments) =>
             {
                 // Grab the temp filename that was passed...
@@ -80,7 +80,7 @@ public class DependencyGraphServiceTests
         var graphService = new DependencyGraphService(dotNetRunner.Object, mockFileSystem);
 
         // Act
-        var dependencyGraph = graphService.GenerateDependencyGraph(_solutionPath);
+        var dependencyGraph = await graphService.GenerateDependencyGraphAsync(_solutionPath).ConfigureAwait(false);
 
         // Assert
         Assert.NotNull(dependencyGraph);

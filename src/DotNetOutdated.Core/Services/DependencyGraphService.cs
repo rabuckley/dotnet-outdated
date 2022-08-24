@@ -18,13 +18,13 @@ public class DependencyGraphService : IDependencyGraphService
         _fileSystem = fileSystem;
     }
 
-    public DependencyGraphSpec GenerateDependencyGraph(string projectPath)
+    public async Task<DependencyGraphSpec> GenerateDependencyGraphAsync(string projectPath)
     {
         var dgOutput = _fileSystem.Path.Combine(_fileSystem.Path.GetTempPath(), _fileSystem.Path.GetTempFileName());
 
         string[] arguments = {"msbuild", $"\"{projectPath}\"", "/t:Restore,GenerateRestoreGraphFile", $"/p:RestoreGraphOutputPath=\"{dgOutput}\""};
 
-        var runStatus = _dotNetRunner.Run(_fileSystem.Path.GetDirectoryName(projectPath), arguments);
+        var runStatus = await _dotNetRunner.Run(_fileSystem.Path.GetDirectoryName(projectPath), arguments).ConfigureAwait(false);
 
         if (!runStatus.IsSuccess)
         {
@@ -35,8 +35,8 @@ public class DependencyGraphService : IDependencyGraphService
 
         using var tempDirectory = new TempDirectory();
         var dependencyGraphFilename = Path.Combine(tempDirectory.DirectoryPath, "DependencyGraph.json");
-        var dependencyGraphText = _fileSystem.File.ReadAllText(dgOutput);
-        File.WriteAllText(dependencyGraphFilename, dependencyGraphText);
+        var dependencyGraphText = await _fileSystem.File.ReadAllTextAsync(dgOutput).ConfigureAwait(false);
+        await File.WriteAllTextAsync(dependencyGraphFilename, dependencyGraphText).ConfigureAwait(false);
         return DependencyGraphSpec.Load(dependencyGraphFilename);
     }
 }
